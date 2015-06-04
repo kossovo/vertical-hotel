@@ -1,0 +1,7 @@
+*~
+*.egg-info/
+*.py[co]
+*.swp
+.coverage
+.DS_Store
+.gunicorn.pid
