@@ -50,15 +50,32 @@ class hotel_housekeeping(models.Model):
 
     _name = "hotel.housekeeping"
     _description = "Reservation"
+    _inherit = ['mail.thread']
 
-    current_date = fields.Date("Today's Date", required=True,default=lambda *a: time.strftime('%Y-%m-%d')) #here in v8 default value is written in field declaration so no more need of _defaults dictionary.. 
-    clean_type = fields.Selection([('daily', 'Daily'), ('checkin', 'Check-In'), ('checkout', 'Check-Out')], 'Clean Type', required=True)
-    room_no = fields.Many2one('hotel.room','Room No',required=True)
+    # Here in v8 default value is written in field declaration so no more need
+    # of _defaults dictionary..
+    current_date = fields.Date(
+        "Today's Date", required=True, default=lambda *a: time.strftime('%Y-%m-%d'),
+        track_visibility='onchange')
+    clean_type = fields.Selection(
+        [('daily', 'Daily'), ('checkin', 'Check-In'), ('checkout', 'Check-Out')],
+        'Clean Type', required=True, track_visibility='onchange')
+    room_no = fields.Many2one('hotel.room', 'Room No', required=True, track_visibility='onchange')
     activity_lines =fields.One2many('hotel.housekeeping.activities','a_list','Activities',help='Details of housekeeping activities.')
-    inspector = fields.Many2one('res.users','Inspector' ,required=True)
-    inspect_date_time =fields.Datetime('Inspect Date Time', required=True)
-    quality = fields.Selection([('bad', 'Bad'), ('good', 'Good'), ('ok', 'Ok')], 'Quality', required=True, help='Inspector inspect the room and mark as Bad, Good or Ok. ')
-    state = fields.Selection([('dirty', 'Dirty'), ('clean', 'Clean'), ('inspect', 'Inspect'), ('done', 'Done'), ('cancel', 'Cancelled')], 'State', select=True, required=True, readonly=True,default=lambda *a: 'dirty')
+    inspector = fields.Many2one(
+        'res.users','Inspector' , required=True, track_visibility='onchange')
+    inspect_date_time =fields.Datetime(
+        'Inspect Date Time', required=True, track_visibility='onchange')
+    quality = fields.Selection(
+        [('bad', 'Bad'), ('good', 'Good'), ('ok', 'Ok')], 'Quality', required=True,
+        track_visibility='onchange',
+        help='Inspector inspect the room and mark as Bad, Good or Ok. ')
+    state = fields.Selection(
+        [
+            ('dirty', 'Dirty'), ('clean', 'Clean'), ('inspect', 'Inspect'),
+            ('done', 'Done'), ('cancel', 'Cancelled')
+        ], 'State', select=True, required=True, readonly=True, default=lambda *a: 'dirty',
+        track_visibility='onchange')
 
     @api.multi
     def action_set_to_dirty(self):
@@ -114,10 +131,10 @@ class hotel_housekeeping_activities(models.Model):
         @param self: The object pointer.
         @param cr: A database cursor
         @param uid: ID of the user currently logged in
-        @param fields: List of fields for which we want default values 
-        @param context: A standard dictionary 
-        @return: A dictionary which of fields with values. 
-        """ 
+        @param fields: List of fields for which we want default values
+        @param context: A standard dictionary
+        @return: A dictionary which of fields with values.
+        """
         if self._context is None:
             self._context = {}
         res = super(hotel_housekeeping_activities, self).default_get(fields)

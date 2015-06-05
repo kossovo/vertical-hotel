@@ -7,7 +7,7 @@
             <field name="name">hotel.housekeeping.form</field>
             <field name="model">hotel.housekeeping</field>
             <field name="arch" type="xml">
-                <form string="Housekeeping" >
+                <form string="Housekeeping" version="7.0">
                     <header>
 
                         <field name="state" widget="statusbar" />
@@ -71,6 +71,10 @@
                         </field>
                         <newline />
                     </sheet>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids" widget="mail_followers"/>
+                        <field name="message_ids" widget="mail_thread"/>
+                    </div>
                 </form>
             </field>
         </record>
