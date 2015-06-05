@@ -39,17 +39,32 @@ class hotel_reservation(models.Model):
     _rec_name = "reservation_no"
     _description = "Reservation"
     _order = 'reservation_no desc'
+    _inherit = ['mail.thread']
 
     reservation_no = fields.Char('Reservation No', size=64,readonly=True, default=lambda obj: obj.env['ir.sequence'].get('hotel.reservation'))
-    date_order = fields.Datetime('Date Ordered', required=True, readonly=True, states={'draft':[('readonly', False)]},default=lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'))
-    warehouse_id = fields.Many2one('stock.warehouse','Hotel', readonly=True, required=True, states={'draft':[('readonly', False)]})
-    partner_id = fields.Many2one('res.partner','Guest Name' ,readonly=True, required=True, states={'draft':[('readonly', False)]})
-    pricelist_id = fields.Many2one('product.pricelist','Price List' ,required=True, readonly=True, states={'draft':[('readonly', False)]}, help="Pricelist for current reservation. ")
+    date_order = fields.Datetime(
+        'Date Ordered', required=True, readonly=True,
+        states={'draft': [('readonly', False)]},
+        default=lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'), track_visibility='onchange')
+    warehouse_id = fields.Many2one(
+        'stock.warehouse', 'Hotel', readonly=True, required=True,
+        states={'draft': [('readonly', False)]}, track_visibility='onchange')
+    partner_id = fields.Many2one(
+        'res.partner', 'Guest Name', readonly=True, required=True,
+        states={'draft': [('readonly', False)]}, track_visibility='onchange')
+    pricelist_id = fields.Many2one(
+        'product.pricelist', 'Price List', required=True, readonly=True,
+        states={'draft': [('readonly', False)]}, help="Pricelist for current reservation. ",
+        track_visibility='onchange')
     partner_invoice_id = fields.Many2one('res.partner','Invoice Address' ,readonly=True, states={'draft':[('readonly', False)]}, help="Invoice address for current reservation. ")
     partner_order_id = fields.Many2one('res.partner','Ordering Contact',readonly=True, states={'draft':[('readonly', False)]}, help="The name and address of the contact that requested the order or quotation.")
     partner_shipping_id = fields.Many2one('res.partner','Delivery Address' ,readonly=True, states={'draft':[('readonly', False)]}, help="Delivery address for current reservation. ")
-    checkin = fields.Datetime('Expected-Date-Arrival', required=True, readonly=True, states={'draft':[('readonly', False)]})
-    checkout = fields.Datetime('Expected-Date-Departure', required=True, readonly=True, states={'draft':[('readonly', False)]})
+    checkin = fields.Datetime(
+        'Expected-Date-Arrival', required=True, readonly=True,
+        states={'draft': [('readonly', False)]}, track_visibility='onchange')
+    checkout = fields.Datetime(
+        'Expected-Date-Departure', required=True, readonly=True,
+        states={'draft': [('readonly', False)]}, track_visibility='onchange')
     adults = fields.Integer('Adults', size=64, readonly=True, states={'draft':[('readonly', False)]}, help='List of adults there in guest list. ')
     children = fields.Integer('Children', size=64, readonly=True, states={'draft':[('readonly', False)]}, help='Number of children there in guest list. ')
     reservation_line = fields.One2many('hotel_reservation.line','line_id','Reservation Line',help='Hotel room reservation details. ')
@@ -60,7 +75,7 @@ class hotel_reservation(models.Model):
     @api.onchange('date_order','checkin')
     def on_change_checkin(self):
       checkin_date=time.strftime('%Y-%m-%d %H:%M:%S')
-      if self.date_order and self.checkin:  
+      if self.date_order and self.checkin:
         if self.checkin < self.date_order:
                 raise except_orm(_('Warning'),_('Checkin date should be greater than the current date.'))
 
@@ -82,13 +97,13 @@ class hotel_reservation(models.Model):
     def onchange_partner_id(self):
         if not self.partner_id:
             self.partner_invoice_id = False
-            self.partner_shipping_id=False 
+            self.partner_shipping_id=False
             self.partner_order_id=False
         else:
             partner_lst = [self.partner_id.id]
             addr = self.partner_id.address_get(['delivery', 'invoice', 'contact'])
             self.partner_invoice_id = addr['invoice']
-            self.partner_order_id = addr['contact'] 
+            self.partner_order_id = addr['contact']
             self.partner_shipping_id = addr['delivery']
             self.pricelist_id=self.partner_id.property_product_pricelist.id
 
@@ -165,7 +180,7 @@ class hotel_reservation(models.Model):
                         'price_unit': r['lst_price'],
                         'product_uom_qty': (datetime.datetime(*time.strptime(reservation['checkout'], '%Y-%m-%d %H:%M:%S')[:5]) - datetime.datetime(*time.strptime(reservation['checkin'], '%Y-%m-%d %H:%M:%S')[:5])).days
                     }))
-                    res_obj = room_obj.browse([r.id]) 
+                    res_obj = room_obj.browse([r.id])
                     res_obj.write({'status': 'occupied'})
             folio_vals.update({'room_lines': folio_lines})
             folio = hotel_folio_obj.create(folio_vals)
@@ -214,7 +229,7 @@ class hotel_room_reservation_line(models.Model):
     check_out = fields.Datetime('Check Out Date', required=True)
     state = fields.Selection([('assigned', 'Assigned'), ('unassigned', 'Unassigned')], 'Room Status')
     reservation_id = fields.Many2one('hotel.reservation',string='Reservation')
-     
+
 hotel_room_reservation_line()
 
 class hotel_room(models.Model):
